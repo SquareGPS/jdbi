@@ -13,6 +13,7 @@
  */
 package org.skife.jdbi.v2.sqlobject;
 
+import com.google.common.base.MoreObjects;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,19 +22,39 @@ import org.skife.jdbi.v2.DBI;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * Sometimes the GC will call {@link #finalize()} on a SqlObject from
  * extremely sensitive places from within the GC machinery.  JDBI should not
  * open a {@link Connection} just to satisfy a (no-op) finalizer.
  * <a href="https://github.com/brianm/jdbi/issues/82">Issue #82</a>.
  */
-public class TestFinalizeBehavior
+public class TestObjectMethodBehavior
 {
     private DBI    dbi;
 
-    interface UselessDao
+    public static abstract class UselessDao
     {
-        public void finalize();
+        public void finalize() {
+
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                    .toString();
+        }
+
+        @Override
+        public int hashCode() {
+            return super.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return super.equals(obj);
+        }
     }
 
     @Test
@@ -42,6 +63,30 @@ public class TestFinalizeBehavior
         final UselessDao dao = dbi.onDemand(UselessDao.class);
         dao.finalize(); // Normally GC would do this, but just fake it
     }
+
+    @Test
+    public void testHashCodeDoesntConnect() throws Exception
+    {
+        final UselessDao dao = dbi.onDemand(UselessDao.class);
+        //noinspection ResultOfMethodCallIgnored
+        dao.hashCode();
+    }
+
+    @Test
+    public void testEqualsDoesntConnect() throws Exception
+    {
+        final UselessDao dao = dbi.onDemand(UselessDao.class);
+        assertEquals(dao, dao);
+    }
+
+    @Test
+    public void testToStringDoesntConnect() throws Exception
+    {
+        final UselessDao dao = dbi.onDemand(UselessDao.class);
+        //noinspection ResultOfMethodCallIgnored
+        dao.toString();
+    }
+
 
     @Before
     public void setUp() throws Exception

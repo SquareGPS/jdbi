@@ -69,6 +69,19 @@ public class TestReturningQueryResults
     }
 
     @Test
+    public void testPrimitiveValueFromNull() throws Exception
+    {
+        handle.execute("insert into something (id, name) values (7, 'Tim')");
+
+        Spiffy spiffy = SqlObjectBuilder.open(dbi, Spiffy.class);
+
+
+        int id = spiffy.findByName("Tim");
+        assertEquals(7, id);
+        assertEquals(0, spiffy.findByName("Diego"));
+    }
+
+    @Test
     public void testIterator() throws Exception
     {
         handle.execute("insert into something (id, name) values (7, 'Tim')");
@@ -118,6 +131,9 @@ public class TestReturningQueryResults
         @SqlQuery("select id, name from something where id = :first or id = :second")
         @Mapper(SomethingMapper.class)
         public List<Something> findTwoByIds(@Bind("first") int from, @Bind("second") int to);
+
+        @SqlQuery("select id from something where name = :name")
+        public int findByName(@Bind("name") String name);
 
     }
 }

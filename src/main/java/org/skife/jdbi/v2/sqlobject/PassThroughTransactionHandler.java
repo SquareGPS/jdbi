@@ -13,12 +13,14 @@
  */
 package org.skife.jdbi.v2.sqlobject;
 
-import net.sf.cglib.proxy.MethodProxy;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.TransactionCallback;
 import org.skife.jdbi.v2.TransactionIsolationLevel;
 import org.skife.jdbi.v2.TransactionStatus;
 import org.skife.jdbi.v2.exceptions.TransactionException;
+
+import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
 
 class PassThroughTransactionHandler implements Handler
 {
@@ -30,7 +32,7 @@ class PassThroughTransactionHandler implements Handler
     }
 
     @Override
-    public Object invoke(HandleDing ding, final Object target, final Object[] args, final MethodProxy mp)
+    public Object invoke(HandleDing ding, final Object target, final Object[] args, final Method mp, Callable<Object> superCall)
     {
         ding.retain("pass-through-transaction");
         try {
@@ -47,7 +49,7 @@ class PassThroughTransactionHandler implements Handler
                     public Object inTransaction(Handle conn, TransactionStatus status) throws Exception
                     {
                         try {
-                            return mp.invokeSuper(target, args);
+                            return superCall.call();
                         }
                         catch (Throwable throwable) {
                             if (throwable instanceof Exception) {
@@ -67,7 +69,7 @@ class PassThroughTransactionHandler implements Handler
                     public Object inTransaction(Handle conn, TransactionStatus status) throws Exception
                     {
                         try {
-                            return mp.invokeSuper(target, args);
+                            return superCall.call();
                         }
                         catch (Throwable throwable) {
                             if (throwable instanceof Exception) {

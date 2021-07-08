@@ -14,8 +14,10 @@
 package org.skife.jdbi.v2.sqlobject;
 
 import com.fasterxml.classmate.members.ResolvedMethod;
-import net.sf.cglib.proxy.MethodProxy;
 import org.skife.jdbi.v2.Query;
+
+import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
 
 class QueryHandler extends CustomizingStatementHandler
 {
@@ -32,7 +34,7 @@ class QueryHandler extends CustomizingStatementHandler
     }
 
     @Override
-    public Object invoke(HandleDing h, Object target, Object[] args, MethodProxy mp)
+    public Object invoke(HandleDing h, Object target, Object[] args, Method mp, Callable<Object> superCall)
     {
         Query q = h.getHandle().createQuery(sql);
         applyCustomizers(q, args);

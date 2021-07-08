@@ -13,16 +13,18 @@
  */
 package org.skife.jdbi.v2.sqlobject;
 
-import net.sf.cglib.proxy.MethodProxy;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.Transaction;
 import org.skife.jdbi.v2.TransactionCallback;
 import org.skife.jdbi.v2.TransactionStatus;
 
+import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
+
 class InTransactionHandler implements Handler
 {
     @Override
-    public Object invoke(HandleDing h, final Object target, Object[] args, MethodProxy mp)
+    public Object invoke(HandleDing h, final Object target, Object[] args, Method mp, Callable<Object> superCall)
     {
         h.retain("transaction#implicit");
         try {

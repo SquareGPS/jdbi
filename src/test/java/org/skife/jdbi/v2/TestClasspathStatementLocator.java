@@ -22,8 +22,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.sf.cglib.transform.AbstractClassLoader;
-import net.sf.cglib.transform.ClassFilter;
 import org.skife.jdbi.v2.sqlobject.stringtemplate.TestingStatementContext;
 import org.skife.jdbi.v2.tweak.StatementLocator;
 
@@ -101,6 +99,7 @@ public class TestClasspathStatementLocator extends DBITestCase
         }
     }
 
+/*
     @Test
     public void testCachesResultAfterFirstLookup() throws Exception
     {
@@ -128,6 +127,7 @@ public class TestClasspathStatementLocator extends DBITestCase
         Thread.currentThread().setContextClassLoader(ctx_loader);
 
     }
+*/
 
     @Test
     public void testCachesOriginalQueryWhenNotFound() throws Exception
@@ -187,11 +187,11 @@ public class TestClasspathStatementLocator extends DBITestCase
         assertEquals(input, located); // second time reads from cache
     }
 
-    static class NoClassFilter implements ClassFilter
+/*    static class NoClassFilter implements ClassFilter
     {
         @Override
         public boolean accept(String className) {
             return false;
         }
-    }
+    }*/
 }

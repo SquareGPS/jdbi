@@ -13,44 +13,39 @@
  */
 package org.skife.jdbi.v2.sqlobject;
 
-import net.sf.cglib.proxy.MethodProxy;
-
 import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
 
-class PassThroughHandler implements Handler
-{
+class PassThroughHandler implements Handler {
 
     private final Method method;
 
-    PassThroughHandler(Method method)
-    {
+    PassThroughHandler(Method method) {
         this.method = method;
     }
 
     @Override
-    public Object invoke(HandleDing ding, Object target, Object[] args, MethodProxy mp)
-    {
+    public Object invoke(HandleDing ding, Object target, Object[] args, Method mp, Callable<Object> superCall) {
         try {
-            return mp.invokeSuper(target, args);
-        }
-        catch (AbstractMethodError e) {
+            if (superCall == null) {
+                throw new AbstractMethodError();
+            }
+            return superCall.call();
+        } catch (AbstractMethodError e) {
             AbstractMethodError error = new AbstractMethodError(
-                "Method " + method.getDeclaringClass().getName() + "#" + method.getName()
-                    + " doesn't make sense -- it probably needs a @Sql* annotation of some kind.");
+                    "Method " + method.getDeclaringClass().getName() + "#" + method.getName()
+                            + " doesn't make sense -- it probably needs a @Sql* annotation of some kind.");
             error.initCause(e);
             throw error;
-        }
-        catch (Throwable throwable) {
+        } catch (Throwable throwable) {
             /*
 
              */
             if (throwable instanceof RuntimeException) {
                 throw (RuntimeException) throwable;
-            }
-            else if (throwable instanceof Error) {
+            } else if (throwable instanceof Error) {
                 throw (Error) throwable;
-            }
-            else {
+            } else {
                 throw new RuntimeException(throwable);
             }
         }

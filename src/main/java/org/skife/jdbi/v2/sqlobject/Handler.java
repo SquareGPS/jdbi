@@ -13,9 +13,11 @@
  */
 package org.skife.jdbi.v2.sqlobject;
 
-import net.sf.cglib.proxy.MethodProxy;
+
+import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
 
 interface Handler
 {
-    Object invoke(HandleDing h, Object target, Object[] args, MethodProxy mp);
+    Object invoke(HandleDing h, Object target, Object[] args, Method method, Callable<Object> superCall);
 }

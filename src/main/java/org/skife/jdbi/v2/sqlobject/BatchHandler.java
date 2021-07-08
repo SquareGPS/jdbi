@@ -13,15 +13,8 @@
  */
 package org.skife.jdbi.v2.sqlobject;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-
-import net.sf.cglib.proxy.MethodProxy;
-
+import com.fasterxml.classmate.members.ResolvedMethod;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.PreparedBatch;
 import org.skife.jdbi.v2.PreparedBatchPart;
@@ -33,9 +26,13 @@ import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import org.skife.jdbi.v2.sqlobject.customizers.BatchChunkSize;
 import org.skife.jdbi.v2.util.IntegerColumnMapper;
 
-import com.fasterxml.classmate.members.ResolvedMethod;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 class BatchHandler extends CustomizingStatementHandler
 {
@@ -130,7 +127,7 @@ class BatchHandler extends CustomizingStatementHandler
     }
 
     @Override
-    public Object invoke(HandleDing h, Object target, Object[] args, MethodProxy mp)
+    public Object invoke(HandleDing h, Object target, Object[] args, Method mp, Callable<Object> superCall)
     {
         boolean foundIterator = false;
         Handle handle = h.getHandle();

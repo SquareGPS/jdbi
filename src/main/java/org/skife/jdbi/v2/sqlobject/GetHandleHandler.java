@@ -13,12 +13,13 @@
  */
 package org.skife.jdbi.v2.sqlobject;
 
-import net.sf.cglib.proxy.MethodProxy;
+import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
 
 class GetHandleHandler implements Handler
 {
     @Override
-    public Object invoke(HandleDing h, Object target, Object[] args, MethodProxy mp)
+    public Object invoke(HandleDing h, Object target, Object[] args, Method mp, Callable<Object> superCall)
     {
         return h.getHandle();
     }
