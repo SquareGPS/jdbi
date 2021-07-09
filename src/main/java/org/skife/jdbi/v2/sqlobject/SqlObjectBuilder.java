@@ -36,6 +36,11 @@ public class SqlObjectBuilder
         return SqlObject.buildSqlObject(sqlObjectType, new ConstantHandleDing(handle));
     }
 
+    public static <T> T attach(Handle handle, Class<T> sqlObjectType, SqlObjectPlugin ... plugins)
+    {
+        return SqlObject.buildSqlObject(sqlObjectType, new ConstantHandleDing(handle), plugins);
+    }
+
     /**
      * Open a handle and attach a new sql object of the specified type to that handle. Be sure to close the
      * sql object (via a close() method, or calling {@link org.skife.jdbi.v2.IDBI#close(Object)}
@@ -50,6 +55,11 @@ public class SqlObjectBuilder
         return SqlObject.buildSqlObject(sqlObjectType, new ConstantHandleDing(dbi.open()));
     }
 
+    public static <T> T open(IDBI dbi, Class<T> sqlObjectType, SqlObjectPlugin ... plugins)
+    {
+        return SqlObject.buildSqlObject(sqlObjectType, new ConstantHandleDing(dbi.open()), plugins);
+    }
+
     /**
      * Create a new sql object which will obtain and release connections from this dbi instance, as it needs to,
      * and can, respectively. You should not explicitely close this sql object
@@ -62,6 +72,11 @@ public class SqlObjectBuilder
     public static <T> T onDemand(final IDBI dbi, final Class<T> sqlObjectType)
     {
         return SqlObject.buildSqlObject(sqlObjectType, new OnDemandHandleDing(dbi));
+    }
+
+    public static <T> T onDemand(final IDBI dbi, final Class<T> sqlObjectType, SqlObjectPlugin ... plugins)
+    {
+        return SqlObject.buildSqlObject(sqlObjectType, new OnDemandHandleDing(dbi), plugins);
     }
 
     /**

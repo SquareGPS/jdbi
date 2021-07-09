@@ -19,7 +19,7 @@ import java.util.concurrent.Callable;
 class RollbackHandler implements Handler
 {
     @Override
-    public Object invoke(HandleDing h, Object target, Object[] args, Method mp, Callable<Object> superCall)
+    public Object invoke(SqlObject sqlObject, HandleDing h, Object target, Object[] args, Method mp, Callable<Object> superCall)
     {
         h.release("transaction#explicit");
         h.getHandle().rollback();

@@ -16,16 +16,8 @@ package org.skife.jdbi.v2;
 import org.skife.jdbi.v2.exceptions.UnableToCloseResourceException;
 import org.skife.jdbi.v2.exceptions.UnableToManipulateTransactionIsolationLevelException;
 import org.skife.jdbi.v2.sqlobject.SqlObjectBuilder;
-import org.skife.jdbi.v2.tweak.ArgumentFactory;
-import org.skife.jdbi.v2.tweak.ContainerFactory;
-import org.skife.jdbi.v2.tweak.ResultColumnMapper;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
-import org.skife.jdbi.v2.tweak.SQLLog;
-import org.skife.jdbi.v2.tweak.StatementBuilder;
-import org.skife.jdbi.v2.tweak.StatementCustomizer;
-import org.skife.jdbi.v2.tweak.StatementLocator;
-import org.skife.jdbi.v2.tweak.StatementRewriter;
-import org.skife.jdbi.v2.tweak.TransactionHandler;
+import org.skife.jdbi.v2.sqlobject.SqlObjectPlugin;
+import org.skife.jdbi.v2.tweak.*;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -449,6 +441,12 @@ class BasicHandle implements Handle
     public <SqlObjectType> SqlObjectType attach(Class<SqlObjectType> sqlObjectType)
     {
         return SqlObjectBuilder.attach(this, sqlObjectType);
+    }
+
+    @Override
+    public <SqlObjectType> SqlObjectType attach(Class<SqlObjectType> sqlObjectType, SqlObjectPlugin ... plugins)
+    {
+        return SqlObjectBuilder.attach(this, sqlObjectType, plugins);
     }
 
     @Override

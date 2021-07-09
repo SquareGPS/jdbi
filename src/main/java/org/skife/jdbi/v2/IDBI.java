@@ -14,6 +14,7 @@
 package org.skife.jdbi.v2;
 
 import org.skife.jdbi.v2.exceptions.CallbackFailedException;
+import org.skife.jdbi.v2.sqlobject.SqlObjectPlugin;
 import org.skife.jdbi.v2.tweak.HandleCallback;
 import org.skife.jdbi.v2.tweak.HandleConsumer;
 
@@ -138,6 +139,8 @@ public interface IDBI
      */
     <SqlObjectType> SqlObjectType open(Class<SqlObjectType> sqlObjectType);
 
+    <SqlObjectType> SqlObjectType open(Class<SqlObjectType> sqlObjectType, SqlObjectPlugin ... plugins);
+
     /**
      * Create a new sql object which will obtain and release connections from this dbi instance, as it needs to,
      * and can, respectively. You should not explicitely close this sql object
@@ -147,6 +150,8 @@ public interface IDBI
      * @return a new sql object of the specified type, with a dedicated handle
      */
     <SqlObjectType> SqlObjectType onDemand(Class<SqlObjectType> sqlObjectType);
+
+    <SqlObjectType> SqlObjectType onDemand(Class<SqlObjectType> sqlObjectType, SqlObjectPlugin ... plugins);
 
     /**
      * Used to close a sql object which lacks a close() method.

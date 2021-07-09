@@ -15,12 +15,7 @@ package org.skife.jdbi.v2.sqlobject;
 
 import com.fasterxml.classmate.members.ResolvedMethod;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.skife.jdbi.v2.Handle;
-import org.skife.jdbi.v2.PreparedBatch;
-import org.skife.jdbi.v2.PreparedBatchPart;
-import org.skife.jdbi.v2.StatementContext;
-import org.skife.jdbi.v2.TransactionCallback;
-import org.skife.jdbi.v2.TransactionStatus;
+import org.skife.jdbi.v2.*;
 import org.skife.jdbi.v2.exceptions.UnableToCreateSqlObjectException;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import org.skife.jdbi.v2.sqlobject.customizers.BatchChunkSize;
@@ -127,7 +122,7 @@ class BatchHandler extends CustomizingStatementHandler
     }
 
     @Override
-    public Object invoke(HandleDing h, Object target, Object[] args, Method mp, Callable<Object> superCall)
+    public Object invoke(SqlObject sqlObject, HandleDing h, Object target, Object[] args, Method mp, Callable<Object> superCall)
     {
         boolean foundIterator = false;
         Handle handle = h.getHandle();

@@ -32,7 +32,7 @@ class PassThroughTransactionHandler implements Handler
     }
 
     @Override
-    public Object invoke(HandleDing ding, final Object target, final Object[] args, final Method mp, Callable<Object> superCall)
+    public Object invoke(SqlObject sqlObject, HandleDing ding, final Object target, final Object[] args, final Method mp, Callable<Object> superCall)
     {
         ding.retain("pass-through-transaction");
         try {

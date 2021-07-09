@@ -25,7 +25,7 @@ class PassThroughHandler implements Handler {
     }
 
     @Override
-    public Object invoke(HandleDing ding, Object target, Object[] args, Method mp, Callable<Object> superCall) {
+    public Object invoke(SqlObject sqlObject, HandleDing ding, Object target, Object[] args, Method mp, Callable<Object> superCall) {
         try {
             if (superCall == null) {
                 throw new AbstractMethodError();

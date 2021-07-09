@@ -14,7 +14,6 @@
 package org.skife.jdbi.v2.sqlobject;
 
 import com.fasterxml.classmate.MemberResolver;
-import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.ResolvedTypeWithMembers;
 import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.classmate.members.ResolvedMethod;
@@ -29,18 +28,17 @@ import org.skife.jdbi.v2.SqlObjectContext;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static java.util.Collections.synchronizedMap;
 
 public class SqlObject {
     private static final TypeResolver typeResolver = new TypeResolver();
-    private static final Map<Method, Handler> mixinHandlers = new HashMap<Method, Handler>();
-    private static final Map<Class<?>, Map<Method, Handler>> handlersCache = synchronizedMap(new WeakHashMap<Class<?>, Map<Method, Handler>>());
+    private static final Map<Method, Handler> mixinHandlers = new HashMap<>();
+    private static final Map<Class<?>, Map<Method, Handler>> handlersCache = synchronizedMap(new WeakHashMap<>());
     private static final Map<Class<?>, Field> sqlObjectFieldsCache = synchronizedMap(new WeakHashMap<>());
+    private static final Map<Class<?>, ResolvedTypeWithMembers> resolvedTypeCache = synchronizedMap(new WeakHashMap<>());
     private static final TypeCache<Class<?>> typeCache = new TypeCache<>(TypeCache.Sort.WEAK);
     private static final String SQL_OBJECT_FIELD_NAME = "___sqlObject___";
     private static final Object monitor = new Object();
@@ -48,7 +46,6 @@ public class SqlObject {
     static {
         mixinHandlers.putAll(TransactionalHelper.handlers());
         mixinHandlers.putAll(GetHandleHelper.handlers());
-        mixinHandlers.putAll(TransmogrifierHelper.handlers());
 
     }
 
@@ -57,17 +54,25 @@ public class SqlObject {
         throw (E) exception;
     }
 
-    @SuppressWarnings("unchecked")
     static <T> T buildSqlObject(final Class<T> sqlObjectType, final HandleDing handle) {
-        Map<Method, Handler> handlers = buildHandlersFor(sqlObjectType);
-        final SqlObject so = new SqlObject(sqlObjectType, handlers, handle);
+        return buildSqlObject(sqlObjectType, handle, new SqlObjectPlugin[0]);
+    }
+
+    @SuppressWarnings("unchecked")
+    static <T> T buildSqlObject(final Class<T> sqlObjectType, final HandleDing handle, SqlObjectPlugin... plugins) {
+        StringBuilder classNameSuffix = new StringBuilder("$SqlObject$");
+        for (SqlObjectPlugin plugin : plugins) {
+            classNameSuffix.append(plugin.getClass().getSimpleName()).append("$");
+        }
+
+        final SqlObject so = new SqlObject(sqlObjectType, handle, plugins);
         try {
             ClassLoader classLoader = sqlObjectType.getClassLoader();
             Class<?> sqlObjectClass = typeCache.findOrInsert(classLoader, sqlObjectType, () -> {
                 return new ByteBuddy()
                         .subclass(sqlObjectType)
                         .implement(CloseInternalDoNotUseThisClass.class)
-                        .suffix("$SqlObject$")
+                        .suffix(classNameSuffix.toString())
                         .defineField(SQL_OBJECT_FIELD_NAME, SqlObject.class, Visibility.PUBLIC)
                         .method(ElementMatchers.any())
                         .intercept(MethodDelegation.to(SqlObject.class))
@@ -92,18 +97,35 @@ public class SqlObject {
         }
     }
 
-    private static Map<Method, Handler> buildHandlersFor(Class<?> sqlObjectType) {
+    private static class PluginInterceptors {
+        final Map<Method, List<SqlObjectPlugin.InvocationWrapper>> invocationWrappers = new HashMap<>();
+
+        static PluginInterceptors build(Class<?> clazz, ResolvedTypeWithMembers resolvedType, SqlObjectPlugin... plugins) {
+            PluginInterceptors res = new PluginInterceptors();
+            for (SqlObjectPlugin plugin : plugins) {
+                for (ResolvedMethod resolvedMethod : resolvedType.getMemberMethods()) {
+                    Method raw_method = resolvedMethod.getRawMember();
+                    res.invocationWrappers.compute(raw_method, (k, v) -> {
+                        if (v == null) {
+                            v = new ArrayList<>(plugins.length);
+                        }
+                        plugin.invocationWrapper(clazz, k).ifPresent(v::add);
+                        return v;
+                    });
+                }
+
+            }
+            return res;
+        }
+    }
+
+    private static Map<Method, Handler> buildHandlersFor(Class<?> sqlObjectType, ResolvedTypeWithMembers resolvedType) {
         if (handlersCache.containsKey(sqlObjectType)) {
             return handlersCache.get(sqlObjectType);
         }
 
-        final MemberResolver mr = new MemberResolver(typeResolver);
-        final ResolvedType sql_object_type = typeResolver.resolve(sqlObjectType);
-
-        final ResolvedTypeWithMembers d = mr.resolve(sql_object_type, null, null);
-
-        final Map<Method, Handler> handlers = new HashMap<Method, Handler>();
-        for (final ResolvedMethod method : d.getMemberMethods()) {
+        final Map<Method, Handler> handlers = new HashMap<>();
+        for (final ResolvedMethod method : resolvedType.getMemberMethods()) {
             final Method raw_method = method.getRawMember();
 
             if (raw_method.isAnnotationPresent(SqlQuery.class)) {
@@ -137,56 +159,84 @@ public class SqlObject {
 
     @BindingPriority(9999)
     @RuntimeType
-    public static Object intercept(@StubValue Object stub,
-                                   @FieldValue(SQL_OBJECT_FIELD_NAME) Object so,
+    public static Object intercept(@FieldValue(SQL_OBJECT_FIELD_NAME) Object so,
                                    @This Object proxy,
                                    @Origin Method method,
                                    @AllArguments Object[] args,
-                                   @SuperCall(nullIfImpossible = true) Callable<Object> superCall) throws Throwable {
-        Object res = ((SqlObject) so).invoke(proxy, method, args, superCall);
-        if (res == null) {
-            return stub;
-        }
-        return res;
+                                   @SuperCall(nullIfImpossible = true) Callable<Object> superCall,
+                                   @StubValue Object stub) throws Throwable {
+        return ((SqlObject) so).intercept(proxy, method, args, superCall, stub);
     }
 
 
     private final Class<?> sqlObjectType;
     private final Map<Method, Handler> handlers;
     private final HandleDing ding;
+    private final SqlObjectPlugin[] plugins;
+    private final PluginInterceptors pluginInterceptors;
 
-    SqlObject(Class<?> sqlObjectType, Map<Method, Handler> handlers, HandleDing ding) {
+    SqlObject(Class<?> sqlObjectType, HandleDing ding, SqlObjectPlugin... plugins) {
         this.sqlObjectType = sqlObjectType;
-        this.handlers = handlers;
         this.ding = ding;
+        this.plugins = plugins;
+        ResolvedTypeWithMembers resolvedType = resolvedTypeCache.computeIfAbsent(sqlObjectType, (t) -> {
+            final MemberResolver mr = new MemberResolver(typeResolver);
+            return mr.resolve(typeResolver.resolve(sqlObjectType), null, null);
+        });
+        this.handlers = buildHandlersFor(sqlObjectType, resolvedType);
+        this.pluginInterceptors = PluginInterceptors.build(sqlObjectType, resolvedType, plugins);
     }
 
-    public Object invoke(Object proxy, Method method, Object[] args, Callable<Object> superCall) throws Throwable {
+    SqlObjectPlugin[] getPlugins() {
+        return plugins;
+    }
+
+    public Object intercept(Object proxy, Method method, Object[] args, Callable<Object> superCall, Object stub) throws Throwable {
+        List<SqlObjectPlugin.InvocationWrapper> list = pluginInterceptors.invocationWrappers.get(method);
+        if (list == null || list.isEmpty()) {
+            return invoke(proxy, method, args, superCall, stub);
+        } else {
+            SqlObjectPlugin.Invocation invocation = () -> invoke(proxy, method, args, superCall, stub);
+            for (SqlObjectPlugin.InvocationWrapper invocationWrapper : list) {
+                invocation = invocationWrapper.wrap(method, args, invocation);
+            }
+            return invocation.invoke();
+        }
+    }
+
+
+    private Object invoke(Object proxy, Method method, Object[] args, Callable<Object> superCall, Object stub) throws Throwable {
+        Object result;
         final Handler handler = handlers.get(method);
 
         // If there is no handler, pretend we are just an Object and don't open a connection (Issue #82)
         if (handler == null) {
-            return superCall.call();
-        }
-
-        Throwable doNotMask = null;
-        String methodName = method.toString();
-        SqlObjectContext oldContext = ding.setContext(new SqlObjectContext(sqlObjectType, method));
-        try {
-            ding.retain(methodName);
-            return handler.invoke(ding, proxy, args, method, superCall);
-        } catch (Throwable e) {
-            doNotMask = e;
-            throw e;
-        } finally {
-            ding.setContext(oldContext);
+            result = superCall.call();
+        } else {
+            Throwable doNotMask = null;
+            String methodName = method.toString();
+            SqlObjectContext oldContext = ding.setContext(new SqlObjectContext(sqlObjectType, method));
             try {
-                ding.release(methodName);
+                ding.retain(methodName);
+                return handler.invoke(this, ding, proxy, args, method, superCall);
             } catch (Throwable e) {
-                if (doNotMask == null) {
-                    throw e;
+                doNotMask = e;
+                throw e;
+            } finally {
+                ding.setContext(oldContext);
+                try {
+                    ding.release(methodName);
+                } catch (Throwable e) {
+                    if (doNotMask == null) {
+                        throw e;
+                    }
                 }
             }
+        }
+        if (result == null) {
+            return stub;
+        } else {
+            return result;
         }
     }
 

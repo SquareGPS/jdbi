@@ -13,15 +13,24 @@
  */
 package org.skife.jdbi.v2.sqlobject;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
+import java.util.Optional;
 
-class TransformHandler implements Handler
-{
-    @Override
-    public Object invoke(HandleDing h, final Object target, Object[] args, Method mp, Callable<Object> superCall)
-    {
-        Class t = (Class) args[0];
-        return SqlObject.buildSqlObject(t, h);
+public interface SqlObjectPlugin {
+
+    interface InvocationWrapper {
+        Invocation wrap(Method method, Object[] args, Invocation invocation) throws Throwable;
     }
+
+    interface Invocation {
+        Object invoke() throws Throwable;
+    }
+
+
+    @Nonnull
+    default Optional<InvocationWrapper> invocationWrapper(Class<?> clazz, Method method) {
+        return Optional.empty();
+    }
+
 }

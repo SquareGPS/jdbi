@@ -46,7 +46,7 @@ class CallHandler extends CustomizingStatementHandler
     }
 
     @Override
-    public Object invoke(HandleDing ding, Object target, Object[] args, Method mp, Callable<Object> superCall)
+    public Object invoke(SqlObject sqlObject, HandleDing ding, Object target, Object[] args, Method mp, Callable<Object> superCall)
     {
         Handle h = ding.getHandle();
         Call call = h.createCall(sql);

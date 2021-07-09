@@ -14,14 +14,8 @@
 package org.skife.jdbi.v2;
 
 import org.skife.jdbi.v2.exceptions.TransactionFailedException;
-import org.skife.jdbi.v2.tweak.ArgumentFactory;
-import org.skife.jdbi.v2.tweak.ContainerFactory;
-import org.skife.jdbi.v2.tweak.ResultColumnMapper;
-import org.skife.jdbi.v2.tweak.ResultSetMapper;
-import org.skife.jdbi.v2.tweak.SQLLog;
-import org.skife.jdbi.v2.tweak.StatementBuilder;
-import org.skife.jdbi.v2.tweak.StatementLocator;
-import org.skife.jdbi.v2.tweak.StatementRewriter;
+import org.skife.jdbi.v2.sqlobject.SqlObjectPlugin;
+import org.skife.jdbi.v2.tweak.*;
 
 import java.io.Closeable;
 import java.sql.Connection;
@@ -285,6 +279,8 @@ public interface Handle extends Closeable
      * @return the new sql object bound to this handle
      */
     <SqlObjectType> SqlObjectType attach(Class<SqlObjectType> sqlObjectType);
+
+    <SqlObjectType> SqlObjectType attach(Class<SqlObjectType> sqlObjectType, SqlObjectPlugin ... plugins);
 
     /**
      * Set the transaction isolation level on the underlying connection

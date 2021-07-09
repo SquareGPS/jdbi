@@ -73,7 +73,7 @@ class UpdateHandler extends CustomizingStatementHandler
     }
 
     @Override
-    public Object invoke(HandleDing h, Object target, Object[] args, Method mp, Callable<Object> superCall)
+    public Object invoke(SqlObject sqlObject, HandleDing h, Object target, Object[] args, Method mp, Callable<Object> superCall)
     {
         Update q = h.getHandle().createStatement(sql);
         applyCustomizers(q, args);

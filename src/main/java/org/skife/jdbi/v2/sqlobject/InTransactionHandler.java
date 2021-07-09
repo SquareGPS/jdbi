@@ -24,7 +24,7 @@ import java.util.concurrent.Callable;
 class InTransactionHandler implements Handler
 {
     @Override
-    public Object invoke(HandleDing h, final Object target, Object[] args, Method mp, Callable<Object> superCall)
+    public Object invoke(SqlObject sqlObject, HandleDing h, final Object target, Object[] args, Method mp, Callable<Object> superCall)
     {
         h.retain("transaction#implicit");
         try {

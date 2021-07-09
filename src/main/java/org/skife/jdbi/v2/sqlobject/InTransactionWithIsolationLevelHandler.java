@@ -13,11 +13,8 @@
  */
 package org.skife.jdbi.v2.sqlobject;
 
-import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.Transaction;
-import org.skife.jdbi.v2.TransactionCallback;
-import org.skife.jdbi.v2.TransactionIsolationLevel;
-import org.skife.jdbi.v2.TransactionStatus;
+import org.skife.jdbi.v2.*;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
@@ -25,7 +22,7 @@ import java.util.concurrent.Callable;
 class InTransactionWithIsolationLevelHandler implements Handler
 {
     @Override
-    public Object invoke(HandleDing h, final Object target, Object[] args, Method mp, Callable<Object> superCall)
+    public Object invoke(SqlObject sqlObject, HandleDing h, final Object target, Object[] args, Method mp, Callable<Object> superCall)
     {
         h.retain("transaction#withlevel");
         try {
