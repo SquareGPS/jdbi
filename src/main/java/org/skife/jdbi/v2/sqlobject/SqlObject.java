@@ -68,7 +68,7 @@ public class SqlObject {
         final SqlObject so = new SqlObject(sqlObjectType, handle, plugins);
         try {
             ClassLoader classLoader = sqlObjectType.getClassLoader();
-            Class<?> sqlObjectClass = typeCache.findOrInsert(classLoader, sqlObjectType, () -> {
+            Class<?> proxyClass = typeCache.findOrInsert(classLoader, sqlObjectType, () -> {
                 return new ByteBuddy()
                         .subclass(sqlObjectType)
                         .implement(CloseInternalDoNotUseThisClass.class)
@@ -81,10 +81,10 @@ public class SqlObject {
                         .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
                         .getLoaded();
             }, monitor);
-            T instance = (T) sqlObjectClass.newInstance();
-            sqlObjectFieldsCache.computeIfAbsent(sqlObjectClass, c -> {
+            T instance = (T) proxyClass.newInstance();
+            sqlObjectFieldsCache.computeIfAbsent(sqlObjectType, c -> {
                 try {
-                    return c.getField(SQL_OBJECT_FIELD_NAME);
+                    return proxyClass.getField(SQL_OBJECT_FIELD_NAME);
                 } catch (NoSuchFieldException e) {
                     throwAsUnchecked(e);
                     return null;
@@ -218,7 +218,7 @@ public class SqlObject {
             SqlObjectContext oldContext = ding.setContext(new SqlObjectContext(sqlObjectType, method));
             try {
                 ding.retain(methodName);
-                return handler.invoke(this, ding, proxy, args, method, superCall);
+                result = handler.invoke(this, ding, proxy, args, method, superCall);
             } catch (Throwable e) {
                 doNotMask = e;
                 throw e;
