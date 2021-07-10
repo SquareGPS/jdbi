@@ -82,9 +82,9 @@ public class SqlObject {
                         .getLoaded();
             }, monitor);
             T instance = (T) proxyClass.newInstance();
-            sqlObjectFieldsCache.computeIfAbsent(sqlObjectType, c -> {
+            sqlObjectFieldsCache.computeIfAbsent(proxyClass, c -> {
                 try {
-                    return proxyClass.getField(SQL_OBJECT_FIELD_NAME);
+                    return c.getField(SQL_OBJECT_FIELD_NAME);
                 } catch (NoSuchFieldException e) {
                     throwAsUnchecked(e);
                     return null;
