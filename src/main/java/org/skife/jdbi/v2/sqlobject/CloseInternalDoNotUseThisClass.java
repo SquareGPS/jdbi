@@ -26,6 +26,8 @@ public interface CloseInternalDoNotUseThisClass
 {
     void ___jdbi_close___();
 
+    String ___jdbi_debug_to_string___();
+
     class CloseHandler implements Handler
     {
         @Override
@@ -36,6 +38,13 @@ public interface CloseInternalDoNotUseThisClass
         }
     }
 
+    class DebugToString implements Handler {
+        @Override
+        public Object invoke(SqlObject sqlObject, HandleDing h, Object target, Object[] args, Method method, Callable<Object> superCall) {
+            return sqlObject.toString();
+        }
+    }
+
     class Helper
     {
         static Map<Method, Handler> handlers()
@@ -43,6 +52,7 @@ public interface CloseInternalDoNotUseThisClass
             try {
                 Map<Method, Handler> h = new HashMap<Method, Handler>();
                 h.put(CloseInternalDoNotUseThisClass.class.getMethod("___jdbi_close___"), new CloseHandler());
+                h.put(CloseInternalDoNotUseThisClass.class.getMethod("___jdbi_debug_to_string___"), new DebugToString());
                 return h;
             }
             catch (NoSuchMethodException e) {

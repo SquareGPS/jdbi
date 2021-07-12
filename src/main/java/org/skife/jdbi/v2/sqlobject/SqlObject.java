@@ -60,10 +60,6 @@ public class SqlObject {
 
     @SuppressWarnings("unchecked")
     static <T> T buildSqlObject(final Class<T> sqlObjectType, final HandleDing handle, SqlObjectPlugin... plugins) {
-        StringBuilder classNameSuffix = new StringBuilder("$SqlObject$");
-        for (SqlObjectPlugin plugin : plugins) {
-            classNameSuffix.append(plugin.getClass().getSimpleName()).append("$");
-        }
 
         final SqlObject so = new SqlObject(sqlObjectType, handle, plugins);
         try {
@@ -72,7 +68,7 @@ public class SqlObject {
                 return new ByteBuddy()
                         .subclass(sqlObjectType)
                         .implement(CloseInternalDoNotUseThisClass.class)
-                        .suffix(classNameSuffix.toString())
+                        .suffix("$SqlObject$")
                         .defineField(SQL_OBJECT_FIELD_NAME, SqlObject.class, Visibility.PUBLIC)
                         .method(ElementMatchers.any())
                         .intercept(MethodDelegation.to(SqlObject.class))
@@ -117,6 +113,11 @@ public class SqlObject {
             }
             return res;
         }
+
+        @Override
+        public String toString() {
+            return invocationWrappers.toString();
+        }
     }
 
     private static Map<Method, Handler> buildHandlersFor(Class<?> sqlObjectType, ResolvedTypeWithMembers resolvedType) {
@@ -138,7 +139,7 @@ public class SqlObject {
                 handlers.put(raw_method, new CallHandler(sqlObjectType, method));
             } else if (raw_method.isAnnotationPresent(CreateSqlObject.class)) {
                 handlers.put(raw_method, new CreateSqlObjectHandler(raw_method.getReturnType()));
-            } else if (method.getName().equals("close") && method.getRawMember().getParameterTypes().length == 0) {
+            } else if (method.getName().equals("close") && raw_method.getParameterTypes().length == 0) {
                 handlers.put(raw_method, new CloseHandler());
             } else if (raw_method.isAnnotationPresent(Transaction.class)) {
                 handlers.put(raw_method, new PassThroughTransactionHandler(raw_method.getAnnotation(Transaction.class)));
@@ -238,6 +239,17 @@ public class SqlObject {
         } else {
             return result;
         }
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder(sqlObjectType + "{");
+        sb.append("handlers=").append(handlers);
+        sb.append(", ding=").append(ding);
+        sb.append(", plugins=").append(Arrays.toString(plugins));
+        sb.append(", pluginInterceptors=").append(pluginInterceptors);
+        sb.append('}');
+        return sb.toString();
     }
 
     public static void close(Object sqlObject) {
