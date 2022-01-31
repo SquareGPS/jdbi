@@ -19,5 +19,5 @@ import java.util.concurrent.Callable;
 
 interface Handler
 {
-    Object invoke(SqlObject sqlObject, HandleDing h, Object target, Object[] args, Method method, Callable<Object> superCall);
+    Object invoke(SqlObject sqlObject, HandleDing h, Object target, Object[] args, Method method, Callable<Object> superCall) throws Throwable;
 }

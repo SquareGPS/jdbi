@@ -25,7 +25,7 @@ class PassThroughHandler implements Handler {
     }
 
     @Override
-    public Object invoke(SqlObject sqlObject, HandleDing ding, Object target, Object[] args, Method mp, Callable<Object> superCall) {
+    public Object invoke(SqlObject sqlObject, HandleDing ding, Object target, Object[] args, Method mp, Callable<Object> superCall) throws Throwable {
         try {
             if (superCall == null) {
                 throw new AbstractMethodError();
@@ -37,17 +37,6 @@ class PassThroughHandler implements Handler {
                             + " doesn't make sense -- it probably needs a @Sql* annotation of some kind.");
             error.initCause(e);
             throw error;
-        } catch (Throwable throwable) {
-            /*
-
-             */
-            if (throwable instanceof RuntimeException) {
-                throw (RuntimeException) throwable;
-            } else if (throwable instanceof Error) {
-                throw (Error) throwable;
-            } else {
-                throw new RuntimeException(throwable);
-            }
         }
     }
 }
