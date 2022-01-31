@@ -160,13 +160,13 @@ public class SqlObject {
 
     @BindingPriority(9999)
     @RuntimeType
-    public static Object intercept(@FieldValue(SQL_OBJECT_FIELD_NAME) Object so,
+    public static Object intercept(@FieldValue(SQL_OBJECT_FIELD_NAME) SqlObject so,
                                    @This Object proxy,
                                    @Origin Method method,
                                    @AllArguments Object[] args,
                                    @SuperCall(nullIfImpossible = true) Callable<Object> superCall,
                                    @StubValue Object stub) throws Throwable {
-        return ((SqlObject) so).intercept(proxy, method, args, superCall, stub);
+        return so.intercept(proxy, method, args, superCall, stub);
     }
 
 
