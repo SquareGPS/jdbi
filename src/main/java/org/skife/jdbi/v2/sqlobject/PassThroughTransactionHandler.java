@@ -22,70 +22,57 @@ import org.skife.jdbi.v2.exceptions.TransactionException;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
-class PassThroughTransactionHandler implements Handler
-{
+class PassThroughTransactionHandler extends PassThroughHandler {
     private final TransactionIsolationLevel isolation;
 
-    PassThroughTransactionHandler(Transaction tx)
-    {
+    PassThroughTransactionHandler(Transaction tx) {
         this.isolation = tx.value();
     }
 
     @Override
-    public Object invoke(SqlObject sqlObject, HandleDing ding, final Object target, final Object[] args, final Method mp, Callable<Object> superCall)
-    {
+    public Object invoke(SqlObject sqlObject, HandleDing ding, final Object target, final Object[] args, final Method mp, Callable<Object> superCall) throws Throwable {
         ding.retain("pass-through-transaction");
         try {
             Handle h = ding.getHandle();
 
-            if (h.isInTransaction()) {
-                throw new TransactionException("Nested @Transaction detected - this is currently not supported.");
-            }
-
             if (isolation == TransactionIsolationLevel.INVALID_LEVEL) {
-                return h.inTransaction(new TransactionCallback<Object>()
-                {
-                    @Override
-                    public Object inTransaction(Handle conn, TransactionStatus status) throws Exception
-                    {
-                        try {
-                            return superCall.call();
-                        }
-                        catch (Throwable throwable) {
-                            if (throwable instanceof Exception) {
-                                throw (Exception) throwable;
-                            }
-                            else {
-                                throw new RuntimeException(throwable);
-                            }
-                        }
+                if (h.isInTransaction()) {
+                    return super.invoke(sqlObject, ding, target, args, mp, superCall);
+                } else {
+                    return h.inTransaction(createCallback(superCall));
+                }
+            } else {
+                if (h.isInTransaction()) {
+                    if (h.getTransactionIsolationLevel() != isolation) {
+                        throw new TransactionException(
+                                "Tried to execute nested transaction with isolation level " + isolation + ", "
+                                        + "but already running in a transaction with isolation level " + h.getTransactionIsolationLevel() + ".");
+                    } else {
+                        return super.invoke(sqlObject, ding, target, args, mp, superCall);
                     }
-                });
+                } else {
+                    return h.inTransaction(isolation, createCallback(superCall));
+                }
             }
-            else {
-                return h.inTransaction(isolation, new TransactionCallback<Object>()
-                {
-                    @Override
-                    public Object inTransaction(Handle conn, TransactionStatus status) throws Exception
-                    {
-                        try {
-                            return superCall.call();
-                        }
-                        catch (Throwable throwable) {
-                            if (throwable instanceof Exception) {
-                                throw (Exception) throwable;
-                            }
-                            else {
-                                throw new RuntimeException(throwable);
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        finally {
+        } finally {
             ding.release("pass-through-transaction");
         }
+    }
+
+    private static TransactionCallback<Object> createCallback(Callable<Object> superCall) {
+        return new TransactionCallback<Object>() {
+            @Override
+            public Object inTransaction(Handle conn, TransactionStatus status) throws Exception {
+                try {
+                    return superCall.call();
+                } catch (Throwable throwable) {
+                    if (throwable instanceof Exception) {
+                        throw (Exception) throwable;
+                    } else {
+                        throw new RuntimeException(throwable);
+                    }
+                }
+            }
+        };
     }
 }

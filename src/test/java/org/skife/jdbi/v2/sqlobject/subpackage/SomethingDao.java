@@ -14,11 +14,8 @@
 package org.skife.jdbi.v2.sqlobject.subpackage;
 
 import org.skife.jdbi.v2.Something;
-import org.skife.jdbi.v2.sqlobject.Bind;
-import org.skife.jdbi.v2.sqlobject.SomethingMapper;
-import org.skife.jdbi.v2.sqlobject.SqlQuery;
-import org.skife.jdbi.v2.sqlobject.SqlUpdate;
-import org.skife.jdbi.v2.sqlobject.Transaction;
+import org.skife.jdbi.v2.TransactionIsolationLevel;
+import org.skife.jdbi.v2.sqlobject.*;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
 
 @RegisterMapper(SomethingMapper.class)
@@ -47,6 +44,24 @@ public abstract class SomethingDao
     public void insertInNestedTransaction(final int id, final String name)
     {
         insertInSingleTransaction(id, name);
+    }
+
+    @Transaction(TransactionIsolationLevel.SERIALIZABLE)
+    public void insertInSingleTransactionSerializable(final int id, final String name)
+    {
+        insert(id, name);
+    }
+
+    @Transaction(TransactionIsolationLevel.SERIALIZABLE)
+    public void insertInNestedTransactionSerializable(final int id, final String name)
+    {
+        insertInSingleTransactionSerializable(id, name);
+    }
+
+    @Transaction(TransactionIsolationLevel.READ_COMMITTED)
+    public void insertInNestedTransactionReadCommitted(final int id, final String name)
+    {
+        insertInSingleTransactionSerializable(id, name);
     }
 
 

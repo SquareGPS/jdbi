@@ -102,18 +102,25 @@ public class TestClassBasedSqlObject
         dao.insertInSingleTransaction(10, "Linda");
     }
 
-    /**
-     * Currently, nested transactions are not supported. Make sure an appropriate exception is
-     * thrown in that case.
-     * <p>
-     *
-     * Side note: H2 does not have a problem with nested transactions - but MySQL has.
-     */
-    @Test(expected = TransactionException.class)
-    public void testNestedTransactionsThrowException()
+    @Test
+    public void testNestedTransactionsWithoutLevel()
     {
         final SomethingDao dao = dbi.onDemand(SomethingDao.class);
         dao.insertInNestedTransaction(11, "Angelina");
+    }
+
+    @Test
+    public void testNestedTransactionsWithSameLevel()
+    {
+        final SomethingDao dao = dbi.onDemand(SomethingDao.class);
+        dao.insertInNestedTransactionSerializable(11, "Angelina");
+    }
+
+    @Test(expected = TransactionException.class)
+    public void testNestedTransactionsDifferentLevel()
+    {
+        final SomethingDao dao = dbi.onDemand(SomethingDao.class);
+        dao.insertInNestedTransactionReadCommitted(11, "Angelina");
     }
 
     @RegisterMapper(SomethingMapper.class)

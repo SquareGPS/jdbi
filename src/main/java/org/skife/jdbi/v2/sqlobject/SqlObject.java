@@ -146,7 +146,7 @@ public class SqlObject {
             } else if (mixinHandlers.containsKey(raw_method)) {
                 handlers.put(raw_method, mixinHandlers.get(raw_method));
             } else {
-                handlers.put(raw_method, new PassThroughHandler(raw_method));
+                handlers.put(raw_method, new PassThroughHandler());
             }
         }
 

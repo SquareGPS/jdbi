@@ -18,11 +18,6 @@ import java.util.concurrent.Callable;
 
 class PassThroughHandler implements Handler {
 
-    private final Method method;
-
-    PassThroughHandler(Method method) {
-        this.method = method;
-    }
 
     @Override
     public Object invoke(SqlObject sqlObject, HandleDing ding, Object target, Object[] args, Method mp, Callable<Object> superCall) throws Throwable {
@@ -33,7 +28,7 @@ class PassThroughHandler implements Handler {
             return superCall.call();
         } catch (AbstractMethodError e) {
             AbstractMethodError error = new AbstractMethodError(
-                    "Method " + method.getDeclaringClass().getName() + "#" + method.getName()
+                    "Method " + mp.getDeclaringClass().getName() + "#" + mp.getName()
                             + " doesn't make sense -- it probably needs a @Sql* annotation of some kind.");
             error.initCause(e);
             throw error;
