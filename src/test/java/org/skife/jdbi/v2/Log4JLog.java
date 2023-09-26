@@ -11,12 +11,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.skife.jdbi.v2.logging;
+package org.skife.jdbi.v2;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.Priority;
-import org.skife.jdbi.v2.DBI;
+import org.skife.jdbi.v2.logging.FormattedLog;
 
 /**
  * Logs SQL via Log4J

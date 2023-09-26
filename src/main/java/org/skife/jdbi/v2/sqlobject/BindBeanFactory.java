@@ -20,6 +20,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.RecordComponent;
 
 class BindBeanFactory implements BinderFactory
 {
@@ -40,16 +41,26 @@ class BindBeanFactory implements BinderFactory
                 }
 
                 try {
-                    Class<?> beanType = bind.type().equals(BindBean.Default.class)
-                        ? arg.getClass()
-                        : bind.type();
+                    if (arg.getClass().isRecord()) {
+                        RecordComponent[] components = arg.getClass().getRecordComponents();
+                        for (RecordComponent component : components) {
+                            Method readMethod = component.getAccessor();
+                            if (readMethod != null) {
+                                q.dynamicBind(readMethod.getReturnType(), prefix + component.getName(), readMethod.invoke(arg));
+                            }
+                        }
+                    } else {
+                        Class<?> beanType = bind.type().equals(BindBean.Default.class)
+                                ? arg.getClass()
+                                : bind.type();
 
-                    BeanInfo infos = Introspector.getBeanInfo(beanType);
-                    PropertyDescriptor[] props = infos.getPropertyDescriptors();
-                    for (PropertyDescriptor prop : props) {
-                        Method readMethod = prop.getReadMethod();
-                        if (readMethod != null) {
-                            q.dynamicBind(readMethod.getReturnType(), prefix + prop.getName(), readMethod.invoke(arg));
+                        BeanInfo infos = Introspector.getBeanInfo(beanType);
+                        PropertyDescriptor[] props = infos.getPropertyDescriptors();
+                        for (PropertyDescriptor prop : props) {
+                            Method readMethod = prop.getReadMethod();
+                            if (readMethod != null) {
+                                q.dynamicBind(readMethod.getReturnType(), prefix + prop.getName(), readMethod.invoke(arg));
+                            }
                         }
                     }
                 }

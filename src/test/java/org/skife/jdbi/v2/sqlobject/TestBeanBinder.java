@@ -20,8 +20,12 @@ import org.junit.Test;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.Something;
+import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.sqlobject.subpackage.PrivateImplementationFactory;
+import org.skife.jdbi.v2.tweak.ResultSetMapper;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -38,6 +42,7 @@ public class TestBeanBinder
         ds.setURL("jdbc:h2:mem:" + UUID.randomUUID());
         dbi = new DBI(ds);
         dbi.registerMapper(new SomethingMapper());
+        dbi.registerMapper(new SomeRecordMapper());
         handle = dbi.open();
 
         handle.execute("create table something (id int primary key, name varchar(100))");
@@ -61,6 +66,16 @@ public class TestBeanBinder
     }
 
     @Test
+    public void testInsertRecord() throws Exception
+    {
+        Spiffy s = handle.attach(Spiffy.class);
+        s.insert(new SomeRecord(2, "Bean"));
+
+        String name = handle.createQuery("select name from something where id = 2").mapTo(String.class).first();
+        assertEquals("Bean", name);
+    }
+
+    @Test
     public void testRead() throws Exception
     {
         Spiffy s = handle.attach(Spiffy.class);
@@ -69,14 +84,29 @@ public class TestBeanBinder
         assertEquals("Phil", phil.getName());
     }
 
+    @Test
+    public void testReadRecord() throws Exception
+    {
+        Spiffy s = handle.attach(Spiffy.class);
+        handle.insert("insert into something (id, name) values (17, 'Phil')");
+        SomeRecord phil = s.findByEqualsOnBothFields(new SomeRecord(17, "Phil"));
+        assertEquals("Phil", phil.name());
+    }
+
 
     interface Spiffy {
 
         @SqlUpdate("insert into something (id, name) values (:id, :name)")
         int insert(@BindBean Something s);
 
+        @SqlUpdate("insert into something (id, name) values (:id, :name)")
+        int insert(@BindBean SomeRecord s);
+
         @SqlQuery("select id, name from something where id = :s.id and name = :s.name")
         Something findByEqualsOnBothFields(@BindBean("s") Something s);
+
+        @SqlQuery("select id, name from something where id = :s.id and name = :s.name")
+        SomeRecord findByEqualsOnBothFields(@BindBean("s") SomeRecord s);
 
         @SqlQuery("select :pi.value")
         String selectPublicInterfaceValue(@BindBean(value = "pi", type = PublicInterface.class) PublicInterface pi);
@@ -91,5 +121,16 @@ public class TestBeanBinder
 
     public interface PublicInterface {
         String getValue();
+    }
+
+    public record SomeRecord(int id, String name) {
+
+    }
+
+    public static class SomeRecordMapper implements ResultSetMapper<SomeRecord> {
+        @Override
+        public SomeRecord map(int index, ResultSet r, StatementContext ctx) throws SQLException {
+            return new SomeRecord(r.getInt("id"), r.getString("name"));
+        }
     }
 }
