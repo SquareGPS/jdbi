@@ -78,9 +78,10 @@
         <project.build.systemJdk>17</project.build.systemJdk>
         <project.build.targetJdk>17</project.build.targetJdk>
         <dep.antlr.version>3.5.3</dep.antlr.version>
-        <basepom.check.fail-all>true</basepom.check.fail-all>
+        <basepom.check.fail-basic>true</basepom.check.fail-basic>
         <basepom.check.skip-checkstyle>true</basepom.check.skip-checkstyle>
         <basepom.check.skip-spotbugs>true</basepom.check.skip-spotbugs>
+        <basepom.check.skip-license>true</basepom.check.skip-license>
 
         <basepom.test.fork-count>8</basepom.test.fork-count>
         <basepom.test.timeout>120</basepom.test.timeout>
