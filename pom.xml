@@ -75,6 +75,7 @@
     </developers>
 
     <properties>
+        <project.build.systemJdk>17</project.build.systemJdk>
         <project.build.targetJdk>17</project.build.targetJdk>
         <dep.antlr.version>3.5.3</dep.antlr.version>
         <basepom.check.fail-all>true</basepom.check.fail-all>
