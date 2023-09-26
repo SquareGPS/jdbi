@@ -99,12 +99,14 @@
             <groupId>com.fasterxml</groupId>
             <artifactId>classmate</artifactId>
             <version>1.5.1</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr-runtime</artifactId>
             <version>${dep.antlr.version}</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
